@@ -27,5 +27,10 @@ namespace MovieTracker.Service
         {
             return await _repository.GetAllGenresAsync();
         }
+
+        public async Task AddMovieAsync(List<MovieDto> movie)
+        {
+            await _repository.AddMovieAsync(movie);
+        }
     }
 }

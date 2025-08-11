@@ -21,6 +21,12 @@ namespace MovieTracker.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // MovieGenre (many-to-many)
+            modelBuilder.Entity<Language>()
+                .HasKey(l => l.Code);
+
+            modelBuilder.Entity<Genre>()
+                .HasKey(g => g.GenreId);
+
             modelBuilder.Entity<MovieGenre>()
                 .HasKey(mg => new { mg.MovieId, mg.GenreId });
 

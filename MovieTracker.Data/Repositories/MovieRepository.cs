@@ -1,5 +1,6 @@
 ﻿using Dapper;
 using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using MovieTracker.Data.Dtos;
 using MovieTracker.Data.Entities;
@@ -10,10 +11,12 @@ namespace MovieTracker.Data.Repository
     public class MovieRepository : IMovieRepository
     {
         private readonly string _connectionString;
-
-        public MovieRepository(IConfiguration config)
+        private readonly MovieDbContext _movieDbContext;
+        public const string imageBaseUrl = "https://image.tmdb.org/t/p/w500";
+        public MovieRepository(IConfiguration config, MovieDbContext movieDbContext)
         {
             _connectionString = config.GetConnectionString("DefaultConnection");
+            _movieDbContext = movieDbContext;
         }
 
         private IDbConnection Connection => new SqlConnection(_connectionString);
@@ -59,5 +62,54 @@ namespace MovieTracker.Data.Repository
             using var conn = Connection;
             return await conn.QueryAsync<Genre>("SELECT GenreId, GenreName FROM Genres");
         }
+
+        public async Task AddMovieAsync(List<MovieDto> movieDto)
+        {
+            // Get existing MovieIds from DB
+            var existingIds = await _movieDbContext.Movies
+                .Select(m => m.MovieId)
+                .ToListAsync();
+
+            // Filter out movies that already exist
+            var newMoviesDto = movieDto
+                .Where(m => !existingIds.Contains(m.Id))
+                .ToList();
+
+            if (!newMoviesDto.Any())
+                return; // Nothing to insert
+
+            // Prepare Movie entities
+            var movies = newMoviesDto.Select(x => new Movie
+            {
+                MovieId = x.Id,
+                Title = x.Title,
+                ReleaseDate = DateTime.TryParse(x.Release_Date, out var date) ? date : (DateTime?)null,
+                Rating = (decimal)x.Vote_Average,
+                Overview = x.Overview,
+                Popularity = (decimal)x.Popularity,
+                OriginalLanguage = x.Original_Language,
+                BackdropImageUrl = string.IsNullOrWhiteSpace(x.Backdrop_Path) ? null : $"{imageBaseUrl}{x.Backdrop_Path}",
+                PosterImageUrl = string.IsNullOrWhiteSpace(x.Poster_Path) ? null : $"{imageBaseUrl}{x.Poster_Path}",
+                OriginalTitle = x.Original_Title,
+                VoteCount = x.Vote_Count,
+            }).ToList();
+
+            _movieDbContext.Movies.AddRange(movies);
+
+            // Prepare MovieGenre entities
+            var movieGenres = newMoviesDto
+                .SelectMany(movie => movie.Genre_Ids.Select(genreId => new MovieGenre
+                {
+                    MovieId = movie.Id,
+                    GenreId = genreId
+                }))
+                .ToList();
+
+            _movieDbContext.MovieGenres.AddRange(movieGenres);
+
+            // Save changes
+            await _movieDbContext.SaveChangesAsync();
+        }
+
     }
 }

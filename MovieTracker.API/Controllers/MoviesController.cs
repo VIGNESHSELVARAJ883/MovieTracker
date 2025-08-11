@@ -35,5 +35,12 @@ namespace MovieTracker.API.Controllers
             var genres = await _movieService.GetAllGenresAsync();
             return Ok(genres);
         }
+
+        [HttpPost]
+        public async Task<IActionResult> AddMoviesAsync(List<MovieDto> movies)
+        {
+            await _movieService.AddMovieAsync(movies);
+            return Ok(new { message = "Movies successfully added to the database." });
+        }
     }
 }

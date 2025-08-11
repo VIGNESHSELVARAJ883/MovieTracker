@@ -8,5 +8,6 @@ namespace MovieTracker.Data.Repository
         Task<IEnumerable<MovieListDto>> GetFilteredMoviesAsync(MovieFilterRequestDto filter);
         Task<IEnumerable<Language>> GetAllLanguagesAsync();
         Task<IEnumerable<Genre>> GetAllGenresAsync();
+        Task AddMovieAsync(List<MovieDto> movieDto);
     }
 }
