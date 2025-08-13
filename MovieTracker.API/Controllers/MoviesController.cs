@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using MovieTracker.Data.Dtos;
 using MovieTracker.Service;
@@ -6,6 +7,7 @@ using MovieTracker.Service;
 namespace MovieTracker.API.Controllers
 {
     [Route("api/[controller]")]
+    [Authorize]
     [ApiController]
     public class MoviesController : ControllerBase
     {

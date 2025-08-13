@@ -1,10 +1,16 @@
-using Microsoft.EntityFrameworkCore;
-using MovieTracker.Service;
-using MovieTracker.Data;
-using MovieTracker.Data.Repository;
-
-using System.Data;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using MovieTracker.Data;
+using MovieTracker.Data.Repositories;
+using MovieTracker.Data.Repository;
+using MovieTracker.Service;
+using MovieTracker.Service.Services;
+using MovieTracker.Service.Utils;
+using System.Data;
+using System.Text;
 
 namespace MovieTracker
 {
@@ -21,6 +27,10 @@ namespace MovieTracker
             builder.Services.AddScoped<IMovieService, MovieService>();
             builder.Services.AddScoped<ITVSeriesRepository, TVSeriesRepository>();
             builder.Services.AddScoped<ITvSeriesService, TvSeriesService>();
+            builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddScoped<IUserRepository, UserRepository>();
+            builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+            builder.Services.AddScoped<IJwtGenerator, JwtGenerator>();
 
             // Register EF Core DbContext
             builder.Services.AddDbContext<MovieDbContext>(options =>
@@ -33,9 +43,66 @@ namespace MovieTracker
             builder.Services.AddTransient<IDbConnection>(sp =>
                 new SqlConnection(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+            builder.Services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+                .AddJwtBearer(options =>
+                {
+                    var key = Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Secret"] ?? throw new InvalidOperationException("JWT Key missing"));
+
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = true,
+                        ValidateAudience = true,
+                        ValidateLifetime = true, // Expired tokens are rejected
+                        ValidateIssuerSigningKey = true,
+                        ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
+                        ValidAudience = builder.Configuration["JwtSettings:Audience"],
+                        IssuerSigningKey = new SymmetricSecurityKey(key),
+                        ClockSkew = TimeSpan.Zero // Optional: no time drift allowed
+                    };
+                });
+
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
+            builder.Services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new OpenApiInfo
+                {
+                    Title = "Movie Tracker API",
+                    Version = "v1"
+                });
+
+                // Add JWT Bearer Authorization to Swagger
+                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    Name = "Authorization",
+                    Type = SecuritySchemeType.Http, // 👈 IMPORTANT
+                    Scheme = "bearer",               // 👈 Lowercase here
+                    BearerFormat = "JWT",
+                    In = ParameterLocation.Header,
+                    Description = "JWT Authorization header using the Bearer scheme.\n\n" +
+                                  "Enter your token.\n\nExample: **12345abcdef**"
+                });
+
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "Bearer"
+                            }
+                        },
+                        Array.Empty<string>()
+                    }
+                });
+            });
+
 
             // Add CORS policy to allow all origins
             builder.Services.AddCors(options =>
@@ -59,6 +126,7 @@ namespace MovieTracker
 
             app.UseHttpsRedirection();
             app.UseCors("AllowAll");
+            app.UseAuthentication();
             app.UseAuthorization();
             app.MapControllers();
             app.Run();

@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using MovieTracker.Data.Dtos;
 using MovieTracker.Service;
 
 namespace MovieTracker.API.Controllers
 {
     [Route("api/[controller]")]
+    [Authorize]
     public class TvSeriesController : Controller
     {
         private readonly ITvSeriesService _tvSeriesService;
