@@ -15,7 +15,7 @@ namespace MovieTracker.Data.Entities
         public int MovieId { get; set; }
         public Movie Movie { get; set; }
 
-        public string Note { get; set; }
-        public DateTime AddedAt { get; set; }
+        public string Note { get; set; } = string.Empty;
+        public DateTime AddedAt { get; set; } = DateTime.UtcNow;
     }
 }

@@ -37,19 +37,25 @@ namespace MovieTracker.Data.Repository
             parameters.Add("@MaxPopularity", filter.MaxPopularity);
             parameters.Add("@GenreId", filter.GenreId);
             parameters.Add("@Status", filter.Status);
+
+            // New filters for user-specific queries
+            parameters.Add("@UserId", filter.UserId);
+            parameters.Add("@IsWatchlist", filter.IsWatchlist);
+            parameters.Add("@IsFavourite", filter.IsFavourite);
+            parameters.Add("@IsWatched", filter.IsWatched);
+
             parameters.Add("@SortColumn", filter.SortColumn);
             parameters.Add("@SortOrder", filter.SortOrder);
             parameters.Add("@PageNumber", filter.PageNumber);
             parameters.Add("@PageSize", filter.PageSize);
 
-            var movies = await conn.QueryAsync<MovieListDto>(
+            return await conn.QueryAsync<MovieListDto>(
                 "sp_GetFilteredMovies",
                 parameters,
                 commandType: CommandType.StoredProcedure
             );
-
-            return movies;
         }
+
 
         public async Task<IEnumerable<Language>> GetAllLanguagesAsync()
         {

@@ -16,6 +16,6 @@ namespace MovieTracker.Data.Entities
         public Movie Movie { get; set; }
 
         public byte? Priority { get; set; }
-        public DateTime AddedAt { get; set; }
+        public DateTime AddedAt { get; set; } = DateTime.UtcNow;
     }
 }

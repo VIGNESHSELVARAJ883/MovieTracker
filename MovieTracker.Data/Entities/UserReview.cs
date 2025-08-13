@@ -16,7 +16,7 @@ namespace MovieTracker.Data.Entities
         public Movie Movie { get; set; }
 
         public string ReviewText { get; set; }
-        public decimal Rating { get; set; }
-        public DateTime CreatedAt { get; set; }
+        public decimal PersonalRating { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }

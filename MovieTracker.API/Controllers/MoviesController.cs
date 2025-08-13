@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using MovieTracker.Data.Dtos;
 using MovieTracker.Service;
+using System.Security.Claims;
 
 namespace MovieTracker.API.Controllers
 {
@@ -17,10 +18,13 @@ namespace MovieTracker.API.Controllers
         {
             _movieService = movieService;
         }
+        private int GetUserId() =>
+            int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? throw new UnauthorizedAccessException());
 
         [HttpGet("search")]
         public async Task<IActionResult> SearchMoviesAsync([FromQuery] MovieFilterRequestDto filter)
         {
+            filter.UserId = GetUserId();
             var movies = await _movieService.GetFilteredMoviesAsync(filter);
             return Ok(movies);
         }

@@ -18,5 +18,10 @@ namespace MovieTracker.Data.Dtos
         public decimal? Runtime { get; set; }
         public string? Status { get; set; }
         public string? Genres { get; set; }  // aggregated via STRING_AGG
+
+        public bool? IsFavourite { get; set; }
+        public bool? IsInWatchlist { get; set; }
+        public bool? IsWatched { get; set; }
+        public string? Review { get; set; }
     }
 }

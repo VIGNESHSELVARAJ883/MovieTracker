@@ -28,8 +28,10 @@ namespace MovieTracker
             builder.Services.AddScoped<ITVSeriesRepository, TVSeriesRepository>();
             builder.Services.AddScoped<ITvSeriesService, TvSeriesService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddScoped<IUserMovieService, UserMovieService>();
             builder.Services.AddScoped<IUserRepository, UserRepository>();
             builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+            builder.Services.AddScoped<IUserMovieRepository, UserMovieRepository>();
             builder.Services.AddScoped<IJwtGenerator, JwtGenerator>();
 
             // Register EF Core DbContext
