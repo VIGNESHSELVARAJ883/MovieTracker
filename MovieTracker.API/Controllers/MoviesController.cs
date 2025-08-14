@@ -48,5 +48,11 @@ namespace MovieTracker.API.Controllers
             await _movieService.AddMovieAsync(movies);
             return Ok(new { message = "Movies successfully added to the database." });
         }
+
+        public async Task<IActionResult> SyncMovies()
+        {
+             await _movieService.SyncMovies();
+            return Ok("Synced successfully.");
+        }
     }
 }

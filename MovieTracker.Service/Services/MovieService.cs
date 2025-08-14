@@ -32,5 +32,10 @@ namespace MovieTracker.Service
         {
             await _repository.AddMovieAsync(movie);
         }
+
+        public async Task SyncMovies()
+        {
+            await _repository.SyncMovies();
+        }
     }
 }

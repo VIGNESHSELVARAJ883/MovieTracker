@@ -40,7 +40,13 @@ namespace MovieTracker
                     builder.Configuration.GetConnectionString("DefaultConnection"),
                     sqlServerOptions => sqlServerOptions.CommandTimeout(120)
                 ));
-
+            //builder.Services.AddHttpClient<IMovieRepository, MovieRepository>(client =>
+            //{
+            //    client.BaseAddress = new Uri("https://api.themoviedb.org/3/");
+            //    client.DefaultRequestHeaders.Add("accept", "application/json");
+            //    client.DefaultRequestHeaders.Add("Authorization",
+            //        $"Bearer {builder.Configuration["TMDB:ApiKey"]}");
+            //});
             // Register Dapper as a transient service
             builder.Services.AddTransient<IDbConnection>(sp =>
                 new SqlConnection(builder.Configuration.GetConnectionString("DefaultConnection")));

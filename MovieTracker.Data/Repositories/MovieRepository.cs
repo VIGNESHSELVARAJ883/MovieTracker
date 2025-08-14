@@ -4,7 +4,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using MovieTracker.Data.Dtos;
 using MovieTracker.Data.Entities;
+using Newtonsoft.Json;
 using System.Data;
+using System.Net.Http;
 
 namespace MovieTracker.Data.Repository
 {
@@ -13,10 +15,12 @@ namespace MovieTracker.Data.Repository
         private readonly string _connectionString;
         private readonly MovieDbContext _movieDbContext;
         public const string imageBaseUrl = "https://image.tmdb.org/t/p/w500";
-        public MovieRepository(IConfiguration config, MovieDbContext movieDbContext)
+        private readonly HttpClient _httpClient;
+        public MovieRepository(IConfiguration config, MovieDbContext movieDbContext, HttpClient httpClient)
         {
             _connectionString = config.GetConnectionString("DefaultConnection");
             _movieDbContext = movieDbContext;
+            _httpClient = httpClient;
         }
 
         private IDbConnection Connection => new SqlConnection(_connectionString);
@@ -117,5 +121,61 @@ namespace MovieTracker.Data.Repository
             await _movieDbContext.SaveChangesAsync();
         }
 
+        public async Task SyncMovies()
+        {
+            var movies = await _movieDbContext.Movies
+               .Where(m =>
+                                (m.HomePage == null && m.ProductionCompanies == null &&
+                                 m.ProductionCountries == null && m.SpokenLanguages == null &&
+                                 m.Runtime == null && m.TagLine == null)).ToListAsync();
+
+
+            foreach (var movie in movies)
+            {
+                var details = await FetchMovieDetailsAsync(movie.MovieId);
+                if (details == null) continue;
+
+                movie.Runtime = details.runtime;
+                movie.TagLine = details.tagline;
+                movie.HomePage = details.homepage;
+                movie.Status = details.status;
+                movie.ProductionCompanies = JsonConvert.SerializeObject(details.production_companies);
+                movie.ProductionCountries = JsonConvert.SerializeObject(details.production_countries);
+                movie.SpokenLanguages = JsonConvert.SerializeObject(details.spoken_languages);
+
+                // Insert missing genres from detail API
+                if (details.genres != null)
+                {
+                    var existingGenres = await _movieDbContext.MovieGenres
+                        .Where(mg => mg.MovieId == movie.MovieId)
+                        .Select(mg => mg.GenreId)
+                        .ToListAsync();
+
+                    foreach (var genre in details.genres)
+                    {
+                        if (!existingGenres.Contains(genre.id))
+                        {
+                            _movieDbContext.MovieGenres.Add(new MovieGenre
+                            {
+                                MovieId = movie.MovieId,
+                                GenreId = genre.id
+                            });
+                        }
+                    }
+                }
+            }
+        }
+
+        private async Task<TMDBMovieDetails?> FetchMovieDetailsAsync(int movieId)
+        {
+            var response = await _httpClient.GetAsync($"movie/{movieId}?language=en-US");
+            if (!response.IsSuccessStatusCode)
+                return null;
+
+            var json = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<TMDBMovieDetails>(json);
+        }
+
     }
+
 }
