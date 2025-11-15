@@ -1,5 +1,4 @@
 ﻿using MovieTracker.Data.Dtos;
-using MovieTracker.Data.Entities;
 
 namespace MovieTracker.Data.Repository
 {

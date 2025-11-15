@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace MovieTracker.Data.Dtos
+﻿namespace MovieTracker.Data.Dtos
 {
     public class TVSeriesListDto
     {

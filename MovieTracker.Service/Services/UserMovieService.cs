@@ -1,11 +1,6 @@
 ﻿using MovieTracker.Data.Dtos;
 using MovieTracker.Data.Repositories;
 using MovieTracker.Data.Repository;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MovieTracker.Service.Services
 {
@@ -38,8 +33,8 @@ namespace MovieTracker.Service.Services
         public Task RemoveFromFavouritesAsync(int userId, int movieId) =>
             _repository.RemoveFromFavouritesAsync(userId, movieId);
 
-        public Task AddReviewAsync(int userId, int movieId, string review, decimal rating) =>
-            _repository.AddReviewAsync(userId, movieId, review, rating);
+        public Task AddReviewAsync(int userId, int movieId, ReviewDto reviewDto) =>
+            _repository.AddReviewAsync(userId, movieId, reviewDto);
 
         public Task RemoveReviewAsync(int userId, int movieId) =>
             _repository.RemoveReviewAsync(userId, movieId);

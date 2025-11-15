@@ -1,9 +1,5 @@
-﻿using MovieTracker.Data.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using MovieTracker.Data.Dtos;
+using MovieTracker.Data.Entities;
 
 namespace MovieTracker.Data.Repositories
 {
@@ -58,7 +54,7 @@ namespace MovieTracker.Data.Repositories
 
         public async Task AddToFavouritesAsync(int userId, int movieId)
         {
-            if (! _context.UserFavourites.Any(x => x.UserId == userId && x.MovieId == movieId))
+            if (!_context.UserFavourites.Any(x => x.UserId == userId && x.MovieId == movieId))
             {
                 _context.UserFavourites.Add(new UserFavourite { UserId = userId, MovieId = movieId });
                 await _context.SaveChangesAsync();
@@ -76,18 +72,18 @@ namespace MovieTracker.Data.Repositories
             }
         }
 
-        public async Task AddReviewAsync(int userId, int movieId, string review, decimal rating)
+        public async Task AddReviewAsync(int userId, int movieId, ReviewDto reviewDto)
         {
             var existing = _context.UserReviews
                 .FirstOrDefault(x => x.UserId == userId && x.MovieId == movieId);
             if (existing == null)
             {
-                _context.UserReviews.Add(new UserReview { UserId = userId, MovieId = movieId, ReviewText = review });
+                _context.UserReviews.Add(new UserReview { UserId = userId, MovieId = movieId, ReviewText = reviewDto.Review, PersonalRating = reviewDto.Rating });
             }
             else
             {
-                existing.ReviewText = review;
-                existing.PersonalRating = rating;
+                existing.ReviewText = reviewDto.Review;
+                existing.PersonalRating = reviewDto.Rating;
             }
             await _context.SaveChangesAsync();
         }

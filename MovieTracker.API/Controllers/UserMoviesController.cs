@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using MovieTracker.Data.Dtos;
 using MovieTracker.Service.Services;
 using System.Security.Claims;
 
@@ -44,9 +44,9 @@ namespace MovieTracker.API.Controllers
         }
 
         [HttpPost("review/{movieId}")]
-        public async Task<IActionResult> AddReview(int movieId, [FromBody] string review, decimal rating = 0)
+        public async Task<IActionResult> AddReview(int movieId, [FromBody] ReviewDto reviewDto)
         {
-            await _userMovieService.AddReviewAsync(GetUserId(), movieId, review, rating);
+            await _userMovieService.AddReviewAsync(GetUserId(), movieId, reviewDto);
             return Ok(new { message = "Review added" });
         }
 

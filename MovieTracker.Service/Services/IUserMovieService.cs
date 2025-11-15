@@ -1,9 +1,4 @@
 ﻿using MovieTracker.Data.Dtos;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MovieTracker.Service.Services
 {
@@ -18,7 +13,7 @@ namespace MovieTracker.Service.Services
         Task AddToFavouritesAsync(int userId, int movieId);
         Task RemoveFromFavouritesAsync(int userId, int movieId);
 
-        Task AddReviewAsync(int userId, int movieId, string review, decimal rating);
+        Task AddReviewAsync(int userId, int movieId, ReviewDto reviewDto);
         Task RemoveReviewAsync(int userId, int movieId);
 
         Task<IEnumerable<MovieListDto>> GetWatchedMoviesAsync(int userId);

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace MovieTracker.Data.Entities
+﻿namespace MovieTracker.Data.Entities
 {
     public class TVSeries
     {

@@ -2,7 +2,6 @@
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using MovieTracker.Data.Dtos;
-using MovieTracker.Data.Entities;
 using System.Data;
 
 namespace MovieTracker.Data.Repository

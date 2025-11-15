@@ -9,6 +9,8 @@ namespace MovieTracker.Data.Repository
         Task<IEnumerable<Language>> GetAllLanguagesAsync();
         Task<IEnumerable<Genre>> GetAllGenresAsync();
         Task AddMovieAsync(List<MovieDto> movieDto);
-        Task SyncMovies();
+        Task<List<Movie>> GetMoviesNeedingDetailsAsync();
+        Task<List<int>> GetMovieGenreIdsAsync(int movieId);
+        Task UpdateMovieAsync(Movie movie, List<MovieGenre> genresToAdd);
     }
 }

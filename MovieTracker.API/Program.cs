@@ -1,14 +1,19 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Datadog.Trace;
+using Datadog.Trace.Configuration;
+
+//using Datadog.Trace.Configuration;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Data.SqlClient;
+using Microsoft.OpenApi;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
 using MovieTracker.Data;
 using MovieTracker.Data.Repositories;
 using MovieTracker.Data.Repository;
 using MovieTracker.Service;
 using MovieTracker.Service.Services;
 using MovieTracker.Service.Utils;
+using Serilog;
 using System.Data;
 using System.Text;
 
@@ -18,13 +23,40 @@ namespace MovieTracker
     {
         public static void Main(string[] args)
         {
+            // Initialize Datadog Tracer
+            var settings = TracerSettings.FromDefaultSources();
+            settings.ServiceName = "movie-tracker-api";
+
+            // Create a Tracer instance
+            var tracer = new Tracer(settings);
+
+            // Optionally set as global
+            Tracer.Instance = tracer;
+
+
             var builder = WebApplication.CreateBuilder(args);
+
+            // Read Datadog API key from configuration or environment
+            var datadogApiKey = builder.Configuration["Datadog:ApiKey"]
+                                ?? Environment.GetEnvironmentVariable("DD_API_KEY");
+
+            Log.Logger = new LoggerConfiguration()
+                .Enrich.FromLogContext()
+                .WriteTo.DatadogLogs(
+                    apiKey: datadogApiKey,
+                    service: "movie-tracker-api",
+                    host: Environment.MachineName,
+                    source: "csharp",
+                    tags: new[] { $"env:{builder.Environment.EnvironmentName}" }
+                )
+                .CreateLogger();
+            //builder.Host.UseSerilog();
 
             // Add services to the container.
             //builder.Services.AddScoped<ITMDBMovieService, TMDBMovieService>();
             //builder.Services.AddScoped<ITMDBMovieRepository, TMDBMovieRepository>();
             builder.Services.AddScoped<IMovieRepository, MovieRepository>();
-            builder.Services.AddScoped<IMovieService, MovieService>();
+            //builder.Services.AddScoped<IMovieService, MovieService>();
             builder.Services.AddScoped<ITVSeriesRepository, TVSeriesRepository>();
             builder.Services.AddScoped<ITvSeriesService, TvSeriesService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
@@ -40,6 +72,15 @@ namespace MovieTracker
                     builder.Configuration.GetConnectionString("DefaultConnection"),
                     sqlServerOptions => sqlServerOptions.CommandTimeout(120)
                 ));
+            // Register HttpClient for TMDB service
+            builder.Services.AddHttpClient<IMovieService, MovieService>(client =>
+            {
+                client.BaseAddress = new Uri("https://api.themoviedb.org/3/");
+                client.DefaultRequestHeaders.Add("accept", "application/json");
+                client.DefaultRequestHeaders.Add("Authorization",
+                    $"Bearer {builder.Configuration["TMDB:ApiKey"]}");
+            });
+
             //builder.Services.AddHttpClient<IMovieRepository, MovieRepository>(client =>
             //{
             //    client.BaseAddress = new Uri("https://api.themoviedb.org/3/");
@@ -95,20 +136,20 @@ namespace MovieTracker
                                   "Enter your token.\n\nExample: **12345abcdef**"
                 });
 
-                c.AddSecurityRequirement(new OpenApiSecurityRequirement
-                {
-                    {
-                        new OpenApiSecurityScheme
-                        {
-                            Reference = new OpenApiReference
-                            {
-                                Type = ReferenceType.SecurityScheme,
-                                Id = "Bearer"
-                            }
-                        },
-                        Array.Empty<string>()
-                    }
-                });
+                //c.AddSecurityRequirement(new OpenApiSecurityRequirement
+                //{
+                //    {
+                //        new OpenApiSecurityScheme
+                //        {
+                //             = new BaseOpenApiReference
+                //            {
+                //                Type = ReferenceType.SecurityScheme,
+                //                Id = "Bearer"
+                //            }
+                //        },
+                //        Array.Empty<string>()
+                //    }
+                //});
             });
 
 

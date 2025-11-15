@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace MovieTracker.Data.Entities
+﻿namespace MovieTracker.Data.Entities
 {
     public class TVSeriesEpisode
     {

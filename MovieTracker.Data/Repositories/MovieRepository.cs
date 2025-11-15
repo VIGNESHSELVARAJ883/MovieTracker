@@ -4,9 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using MovieTracker.Data.Dtos;
 using MovieTracker.Data.Entities;
-using Newtonsoft.Json;
 using System.Data;
-using System.Net.Http;
 
 namespace MovieTracker.Data.Repository
 {
@@ -121,59 +119,36 @@ namespace MovieTracker.Data.Repository
             await _movieDbContext.SaveChangesAsync();
         }
 
-        public async Task SyncMovies()
+        public Task<List<Movie>> GetMoviesNeedingDetailsAsync()
         {
-            var movies = await _movieDbContext.Movies
-               .Where(m =>
-                                (m.HomePage == null && m.ProductionCompanies == null &&
-                                 m.ProductionCountries == null && m.SpokenLanguages == null &&
-                                 m.Runtime == null && m.TagLine == null)).ToListAsync();
-
-
-            foreach (var movie in movies)
-            {
-                var details = await FetchMovieDetailsAsync(movie.MovieId);
-                if (details == null) continue;
-
-                movie.Runtime = details.runtime;
-                movie.TagLine = details.tagline;
-                movie.HomePage = details.homepage;
-                movie.Status = details.status;
-                movie.ProductionCompanies = JsonConvert.SerializeObject(details.production_companies);
-                movie.ProductionCountries = JsonConvert.SerializeObject(details.production_countries);
-                movie.SpokenLanguages = JsonConvert.SerializeObject(details.spoken_languages);
-
-                // Insert missing genres from detail API
-                if (details.genres != null)
-                {
-                    var existingGenres = await _movieDbContext.MovieGenres
-                        .Where(mg => mg.MovieId == movie.MovieId)
-                        .Select(mg => mg.GenreId)
-                        .ToListAsync();
-
-                    foreach (var genre in details.genres)
-                    {
-                        if (!existingGenres.Contains(genre.id))
-                        {
-                            _movieDbContext.MovieGenres.Add(new MovieGenre
-                            {
-                                MovieId = movie.MovieId,
-                                GenreId = genre.id
-                            });
-                        }
-                    }
-                }
-            }
+            return _movieDbContext.Movies
+                .Where(m => m.HomePage == null &&
+                            m.ProductionCompanies == null &&
+                            m.ProductionCountries == null &&
+                            m.SpokenLanguages == null &&
+                            m.Runtime == null &&
+                            m.TagLine == null)
+                .ToListAsync();
         }
 
-        private async Task<TMDBMovieDetails?> FetchMovieDetailsAsync(int movieId)
+        public Task<List<int>> GetMovieGenreIdsAsync(int movieId)
         {
-            var response = await _httpClient.GetAsync($"movie/{movieId}?language=en-US");
-            if (!response.IsSuccessStatusCode)
-                return null;
+            return _movieDbContext.MovieGenres
+                .Where(mg => mg.MovieId == movieId)
+                .Select(mg => mg.GenreId)
+                .ToListAsync();
+        }
 
-            var json = await response.Content.ReadAsStringAsync();
-            return JsonConvert.DeserializeObject<TMDBMovieDetails>(json);
+        public async Task UpdateMovieAsync(Movie movie, List<MovieGenre> genresToAdd)
+        {
+            _movieDbContext.Movies.Update(movie);
+
+            if (genresToAdd?.Any() == true)
+            {
+                await _movieDbContext.MovieGenres.AddRangeAsync(genresToAdd);
+            }
+
+            await _movieDbContext.SaveChangesAsync();
         }
 
     }

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using MovieTracker.Data.Dtos;
 
 namespace MovieTracker.Data.Repositories
 {
@@ -17,7 +13,7 @@ namespace MovieTracker.Data.Repositories
         Task AddToFavouritesAsync(int userId, int movieId);
         Task RemoveFromFavouritesAsync(int userId, int movieId);
 
-        Task AddReviewAsync(int userId, int movieId, string review,decimal rating);
+        Task AddReviewAsync(int userId, int movieId, ReviewDto reviewDto);
         Task RemoveReviewAsync(int userId, int movieId);
     }
 
